@@ -22,13 +22,18 @@ namespace SolutionForSubtitleTimeshift.Implementations
         {
           await WriteSubtitleModelToFile(streamWriter, subtitleModel);
         };
+
+        await streamWriter.FlushAsync();
       }
     }
 
     private async Task WriteSubtitleModelToFile(StreamWriter streamWriter, SubtitleModel model)
     {
+      await WriteEmptyLines(model.OrderWhiteLine, streamWriter);
 
       await WriteSubtitleOrder(streamWriter, model.Order);
+      
+      await WriteEmptyLines(model.TimeSpanWhiteLines, streamWriter);
 
       await WriteSubtitleTimeSpanSection(streamWriter, model.Start, model.End);
 
@@ -65,8 +70,15 @@ namespace SolutionForSubtitleTimeshift.Implementations
       {
         await streamWriter.WriteLineAsync(line);
       }
+    }
 
-      await streamWriter.WriteLineAsync();
+    private async Task WriteEmptyLines(int countEmptyLines, StreamWriter streamWriter)
+    {
+      while(countEmptyLines > 0) 
+      {
+        await streamWriter.WriteLineAsync();
+        countEmptyLines--;
+      }
     }
   }
 }

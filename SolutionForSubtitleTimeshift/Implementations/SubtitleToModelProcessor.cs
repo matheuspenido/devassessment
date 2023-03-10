@@ -3,7 +3,6 @@ using SolutionForSubtitleTimeshift.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ namespace SolutionForSubtitleTimeshift.Implementations
   {
     public async Task<IEnumerable<SubtitleModel>> GenerateModel(Stream stream, Encoding encoding, int buffersize, bool leaveOpen)
     {
-      //var endFromPreviousSection = TimeSpan.Zero;
       var structureSubtitleModel = new List<SubtitleModel>();
       var detectBOM = true;
 
@@ -24,31 +22,60 @@ namespace SolutionForSubtitleTimeshift.Implementations
         {
           var subtitleModel = new SubtitleModel();
 
-          var sectionOrder = await RemoveStartWhiteLines(streamReader);
+          var (found, content, emptyLines) = await IsASectionStart(streamReader);
+          subtitleModel.OrderWhiteLine = emptyLines;
+          
+          if (found)
+            subtitleModel.Order = int.Parse(content);
+          
+          (found, content, emptyLines) = await IsATimeSpanSection(found, content, streamReader);
+          subtitleModel.TimeSpanWhiteLines = emptyLines;
 
-          if (!streamReader.EndOfStream)
-          {
-            subtitleModel.Order = int.Parse(sectionOrder);
-            (subtitleModel.Start, subtitleModel.End) = await ExtractSubtitleTimeSpan(streamReader);
-            subtitleModel.Text = await ExtractSubtitleText(streamReader);
+          if (found)
+            (subtitleModel.Start, subtitleModel.End) = ExtractSubtitleTimeSpan(content);
 
-            //if (!isTimeSpanInSync(endFromPreviousSection, subtitleModel.Start, subtitleModel.End))
-            //  throw new InvalidDataException("Invalid Data: Date is out of sync.");
+          subtitleModel.Text = await ExtractSubtitleText(found, content, streamReader);
 
-            //endFromPreviousSection = subtitleModel.End;
-
+          if (found)
             structureSubtitleModel.Add(subtitleModel);
-          }
         }
       }
 
       return structureSubtitleModel;
     }
 
-    private async Task<(TimeSpan, TimeSpan)> ExtractSubtitleTimeSpan(StreamReader streamReader)
+    private async Task<(bool, string, int)> IsASectionStart(StreamReader streamReader)
     {
-      var timeSpanLine = await streamReader.ReadLineAsync();
+      var (content, emptyLinesFound) = await WhiteLineCounter(streamReader);
 
+      var itIs = int.TryParse(content, out var sectionStart);
+
+      return (itIs, content, emptyLinesFound);
+    }
+
+    private async Task<(bool, string, int)> IsATimeSpanSection(bool previousOk, string previousContent, StreamReader streamReader)
+    {
+      string content;
+      int emptyLinesFound = 0;
+
+      if (previousOk)
+        (content, emptyLinesFound) = await WhiteLineCounter(streamReader);
+      else
+        content = previousContent;
+
+      var itIsTimeSpan1 = Regex.IsMatch(content, @"^[0-9]{1,2}[:][0-9]{1,2}[:][0-9]{1,2}[, | .][0-9]{3,7}");
+      var itIsTimeSpan2 = Regex.IsMatch(content, @"[0-9]{1,2}[:][0-9]{1,2}[:][0-9]{1,2}[, | .][0-9]{3,7}$");
+
+      if (itIsTimeSpan1 && itIsTimeSpan2)
+      {
+        return (true, content,  emptyLinesFound);
+      }
+
+      return (false, content, emptyLinesFound);
+    }
+
+    private (TimeSpan, TimeSpan) ExtractSubtitleTimeSpan(string timeSpanLine)
+    {
       TimeSpan startTimeSpan;
       TimeSpan endTimeSpan;
 
@@ -71,54 +98,36 @@ namespace SolutionForSubtitleTimeshift.Implementations
       return (startTimeSpan, endTimeSpan);
     }
 
-    private async Task<List<string>> ExtractSubtitleText(StreamReader streamReader)
+    private async Task<List<string>> ExtractSubtitleText(bool previousOk, string previousContent, StreamReader streamReader)
     {
       var textSection = new List<string>();
       string textLine;
-      bool emptyLineAdded = false;
-      int maxAllowedLinesForText = 0;
+
+      if (!previousOk)
+        textSection.Add(previousContent);
 
       do
       {
         textLine = await streamReader.ReadLineAsync();
+        textSection.Add(textLine);
 
-        if (textSection.Count == 0)
-        {
-          textSection.Add(textLine);
-          if (textLine == string.Empty)
-            emptyLineAdded = true;
-        }
-        else
-          if (textLine != string.Empty)
-            textSection.Add(textLine);
-
-        maxAllowedLinesForText++;
-
-      } while (!streamReader.EndOfStream && !emptyLineAdded && maxAllowedLinesForText != 2);
+      } while (!string.IsNullOrEmpty(textLine));
 
       return textSection;
     }
 
-    //private bool isTimeSpanInSync(TimeSpan endFromPreviousSection, TimeSpan start, TimeSpan end)
-    //{
-    //  return (end >= start && start >= endFromPreviousSection);
-    //}
-
-    private async Task<string> RemoveStartWhiteLines(StreamReader streamReader)
+    private async Task<(string, int)> WhiteLineCounter(StreamReader streamReader)
     {
       string line = null;
-
+      
+      int lineCounter = 0;
       while (string.IsNullOrEmpty(line) && !streamReader.EndOfStream)
       {
         line = await streamReader.ReadLineAsync();
+        lineCounter++;
       }
 
-      return line;
-    }
-
-    private bool IsEnd(int? order, TimeSpan? start, TimeSpan? end, IEnumerable<string> text)
-    {
-      return (order == null || start == null || end == null || text.Count() == 0);
+      return (line, lineCounter - 1);
     }
   }
 }

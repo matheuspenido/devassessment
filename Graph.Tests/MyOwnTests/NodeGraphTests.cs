@@ -4,13 +4,14 @@ using SolutionForGraphNavigator.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using Xunit;
 
 namespace Graph.Tests.MyOwnTests
 {
   public class NodeGraphTests
   {
-    [Fact(DisplayName = "[AddNodeRegister] Should Add Node Register")]
+    [Fact(DisplayName = "[AddNodeRegister] Should Add Node To Registers")]
     public void AddNodeLink_Should_Add_Node_Register()
     {
       //Arrange
@@ -21,15 +22,15 @@ namespace Graph.Tests.MyOwnTests
 
       //Act
       var nodeGraph = new NodeGraph<string>();
-      nodeGraph.AddNodeRegister(mockedNode1.Object, node2);
+      nodeGraph.RegisterNode(mockedNode1.Object, node2);
 
       //Assert
-      Assert.True(nodeGraph.NodeRegisters.ContainsKey("a"));
-      Assert.True(nodeGraph.NodeRegisters.ContainsKey("b"));
+      Assert.True(nodeGraph.NodesRegister.ContainsKey("a"));
+      Assert.True(nodeGraph.NodesRegister.ContainsKey("b"));
       mockedNode1.Verify(n => n.PointTo(node2), Times.Once);
     }
 
-    [Fact(DisplayName = "[AddNodeRegister] Should Not Throw An Exception When Try To Add Repeated Register")]
+    [Fact(DisplayName = "[AddNodeRegister] Should Not Throw An Exception When Try To Add Repeated Node, Just Ignore")]
     public void AddNodeLink_Should_Not_Throw_An_Exception_When_Try_To_Add_Repeated_Register()
     {
       //Arrange
@@ -40,8 +41,8 @@ namespace Graph.Tests.MyOwnTests
 
       //Act
       var nodeGraph = new NodeGraph<string>();
-      nodeGraph.AddNodeRegister(mockedNode1.Object, node2);
-      var exception = Record.Exception(() => nodeGraph.AddNodeRegister(mockedNode1.Object, node2));
+      nodeGraph.RegisterNode(mockedNode1.Object, node2);
+      var exception = Record.Exception(() => nodeGraph.RegisterNode(mockedNode1.Object, node2));
 
       //Assert
       Assert.Null(exception);
@@ -61,13 +62,13 @@ namespace Graph.Tests.MyOwnTests
 
       //Act
       var nodeGraph = new NodeGraph<string>();
-      nodeGraph.AddNodeRegister(mockedNode1.Object, node2);
-      nodeGraph.AddNodeRegister(mockedNode1.Object, node2);
+      nodeGraph.RegisterNode(mockedNode1.Object, node2);
+      nodeGraph.RegisterNode(mockedNode1.Object, node2);
 
       //Assert
-      Assert.True(nodeGraph.NodeRegisters.ContainsKey("a"));
-      Assert.True(nodeGraph.NodeRegisters.ContainsKey("b"));
-      Assert.Equal(expectedNumberOfNodesRegistered, nodeGraph.NodeRegisters.Count);
+      Assert.True(nodeGraph.NodesRegister.ContainsKey("a"));
+      Assert.True(nodeGraph.NodesRegister.ContainsKey("b"));
+      Assert.Equal(expectedNumberOfNodesRegistered, nodeGraph.NodesRegister.Count);
       mockedNode1.Verify(n => n.PointTo(node2), Times.Exactly(2));
     }
 
@@ -94,7 +95,7 @@ namespace Graph.Tests.MyOwnTests
       var node1 = new Node<string>("a");
       var node2 = new Node<string>("b");
       var nodeGraph = new NodeGraph<string>();
-      nodeGraph.NodeRegisters["a"] = node1;
+      nodeGraph.NodesRegister["a"] = node1;
 
       //Act
       void act() => nodeGraph.Navigate(node1, node2);
@@ -104,7 +105,7 @@ namespace Graph.Tests.MyOwnTests
       Assert.Equal("Invalid Target Node.", exception.Message);
     }
 
-    [Fact(DisplayName = "[Navigate] Should Navigate Between Two Nodes And Print The Path (Single Path)")]
+    [Fact(DisplayName = "[Navigate] Should Navigate Between Two Nodes And Return The Ordered Nodes Traveled and The Printed Path (Single Path)")]
     public void Navigate_Should_Navigate_Between_Two_Nodes_And_Print_The_Path__SinglePath()
     {
       //Arrange
@@ -117,8 +118,10 @@ namespace Graph.Tests.MyOwnTests
       var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode2.Object);
 
       //Assert
-      //Assert.Equal(nodeGraph.CurrentNode, mockedNode2.Object);
-      Assert.Equal(expectedPath, result.FirstOrDefault());
+      result.Subscribe(a =>
+      {
+        Assert.Equal(expectedPath, string.Join("-", a.ToList()[0]));
+      });
     }
 
     [Fact(DisplayName = "[Navigate] Should Navigate Between Three Nodes And Print The Path (Single Path)")]
@@ -135,11 +138,13 @@ namespace Graph.Tests.MyOwnTests
       var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode3.Object);
 
       //Assert
-      //Assert.Equal(nodeGraph.CurrentNode, mockedNode3.Object);
-      Assert.Equal(expectedPath, result.FirstOrDefault());
+      result.Subscribe(a =>
+      {
+        Assert.Equal(expectedPath, string.Join("-", a.ToList()[0]));
+      });
     }
 
-    [Fact(DisplayName = "[Navigate] Should Navigate Between Nodes And Print The Path (Multiple Paths)")]
+    [Fact(DisplayName = "[Navigate] Should Navigate Between Different Branchs (Multiple Paths)")]
     public void Navigate_Should_Navigate_Between_Nodes_And_Print_The_Path__MultiplePaths()
     {
       //Arrange
@@ -151,15 +156,17 @@ namespace Graph.Tests.MyOwnTests
       var mockedNode3 = mocks[2];
 
       //Act
-      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode3.Object).ToList();
+      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode3.Object);
 
       //Assert
-      //Assert.Equal(nodeGraph.CurrentNode, mockedNode3.Object);
-      Assert.Equal(expectedPath1, result[0]);
-      Assert.Equal(expectedPath2, result[1]);
+      result.Subscribe(a =>
+      {
+        Assert.Equal(expectedPath1, string.Join("-", a.ToList()[0]));
+        Assert.Equal(expectedPath2, string.Join("-", a.ToList()[1]));
+      });
     }
 
-    [Fact(DisplayName = "[Navigate] Should Doens't Find Any Path (Single Paths)")]
+    [Fact(DisplayName = "[Navigate] Should Doens't Find Any Path When Try Transverse Order (Single Paths)")]
     public void Navigate_Should_Doesnt_Find_Any_Path__SinglePath()
     {
       //Arrange
@@ -170,10 +177,11 @@ namespace Graph.Tests.MyOwnTests
       var mockedNode3 = mocks[2];
 
       //Act
-      var result = nodeGraph.Navigate(mockedNode3.Object, mockedNode1.Object).ToList();
+      var result = nodeGraph.Navigate(mockedNode3.Object, mockedNode1.Object);
 
       //Assert
-      Assert.Empty(result);
+      result.Subscribe(a => Assert.Empty(a));
+      
     }
 
     [Fact(DisplayName = "[Navigate] Should Not Navigate Inside Closed Loop Path (Single Closed Loop Path)")]
@@ -187,11 +195,10 @@ namespace Graph.Tests.MyOwnTests
       var mockedNode1 = mocks[0]; //a node.
 
       //Act
-      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode1.Object).ToList();
+      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode1.Object);
 
       //Assert
-      //Assert.Equal(nodeGraph.CurrentNode, mockedNode1.Object);
-      Assert.Equal(expectedPath, result[0]);
+      result.Subscribe(a => Assert.Equal(expectedPath, string.Join("-",a.ToList())));
     }
 
     [Fact(DisplayName = "[Navigate] Should Find Multiples Paths (Multiple Closed Loop Path)")]
@@ -212,13 +219,16 @@ namespace Graph.Tests.MyOwnTests
       var (mocks, nodeGraph) = CreateStringMockedGraph(new List<string>() { mockPath1, mockPath2, mockPath3, mockPath4, mockPath5, mockPath6, mockPath7 });
       var mockedNode1 = mocks[0]; //a node.
       var mockedNode5 = mocks[4]; //e node.
+      
       //Act
-      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode5.Object).ToList();
-
+      var result = nodeGraph.Navigate(mockedNode1.Object, mockedNode5.Object);
+      
       //Assert
-      //Assert.Equal(nodeGraph.CurrentNode, mockedNode1.Object);
-      Assert.Contains(result, l => l == expectedPath1);
-      Assert.Contains(result, l => l == expectedPath2);
+      result.Subscribe(a =>
+      {
+        Assert.Equal(expectedPath1, string.Join("-", a.ToList()[0]));
+        Assert.Equal(expectedPath2, string.Join("-", a.ToList()[1]));
+      });
     }
 
     private Tuple<List<Mock<INode<string>>>, NodeGraph<string>> CreateStringMockedGraph(string path)
@@ -242,7 +252,7 @@ namespace Graph.Tests.MyOwnTests
         previousMock.Setup(n => n.Links).Returns(new Dictionary<string, INode<string>> { { currentMock.Object.Id, currentMock.Object } });
         previousMock.Setup(n => n.GetNodeLink(currentMock.Object.Id)).Returns(currentMock.Object);
 
-        nodeGraph.AddNodeRegister(previousMock.Object, currentMock.Object);
+        nodeGraph.RegisterNode(previousMock.Object, currentMock.Object);
       }
 
       return Tuple.Create(returnMocks, nodeGraph);
@@ -260,7 +270,7 @@ namespace Graph.Tests.MyOwnTests
 
         foreach (var id in ids)
         {
-          var isMockCreated = nodeGraph.NodeRegisters.TryGetValue(id, out var registeredMock);
+          var isMockCreated = nodeGraph.NodesRegister.TryGetValue(id, out var registeredMock);
 
           if (!isMockCreated && !mockLinks.ContainsKey(id))
           {
@@ -285,7 +295,7 @@ namespace Graph.Tests.MyOwnTests
           previousMock.Setup(n => n.Links).Returns(dictionary);
           previousMock.Setup(n => n.GetNodeLink(currentMock.Object.Id)).Returns(currentMock.Object);
 
-          nodeGraph.AddNodeRegister(previousMock.Object, currentMock.Object);
+          nodeGraph.RegisterNode(previousMock.Object, currentMock.Object);
         }
       });
 

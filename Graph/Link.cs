@@ -1,4 +1,7 @@
-﻿namespace Graph
+﻿using System.Collections.Generic;
+using System.Reactive.Linq;
+
+namespace Graph
 {
     public interface ILink<T>
     {
