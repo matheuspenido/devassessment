@@ -29,8 +29,8 @@ namespace Graph.Tests
             var graph = new Graph<string>(links);
             var paths = graph.RoutesBetween("a", "e");
 
-            var list = paths.ToEnumerable().ToArray();
-            Assert.Equal(2, list.Length);
+            var list = paths.ToEnumerable().ToArray()[0];
+            Assert.Equal(2, list.Count());
 
             Assert.Contains(list, l => String.Join("-", l) == "a-b-c-d-e");
             Assert.Contains(list, l => String.Join("-", l) == "a-h-g-f-e");
