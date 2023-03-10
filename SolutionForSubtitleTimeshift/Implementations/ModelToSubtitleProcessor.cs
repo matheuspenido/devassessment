@@ -22,6 +22,8 @@ namespace SolutionForSubtitleTimeshift.Implementations
         {
           await WriteSubtitleModelToFile(streamWriter, subtitleModel);
         };
+
+        await streamWriter.FlushAsync();
       }
     }
 
