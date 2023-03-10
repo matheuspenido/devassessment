@@ -118,86 +118,10 @@ namespace SubtitleTimeshift.Tests.MyOwnTests
       Assert.Equal(expectedTextRecord3.Split('\n')[0].Trim(' ', '\r', '\n'), subtitleModel3.Text[0]);
       Assert.Equal(expectedTextRecord3.Split('\n')[1].Trim(' ', '\r', '\n'), subtitleModel3.Text[1]);
     }
-
-    //[Fact(DisplayName = "[Process] Should Throw An InvalidDataException When The Srt File Is Corrupted. (Section Order Out Of Sync)")]
-    //public async void Process__Should_Throw_An_InvalidDataException_When_The_Srt_File_Is_Corrupted__SectionOrderOutOfSync()
-    //{
-    //  //Arrange
-    //  var encoding = Encoding.UTF8;
-
-    //  var mockedSrt = SubtitlesMock.MockedInvalidSrtFile_OrderCorrupted();
-    //  var stream = MockedFileUsingMemoryStream(mockedSrt);
-    //  var bufferSize = 1024;
-    //  var leaveOpen = false;
-
-    //  //Act
-    //  var result = await Assert.ThrowsAsync<InvalidDataException>(async () => await _subtitleProcessor.GenerateModel(stream, encoding, bufferSize, leaveOpen));
-
-    //  //Assert
-    //  Assert.IsType<InvalidDataException>(result);
-    //  Assert.Equal("Invalid Data: The file srt is corrupted.", result.Message);
-    //}
-
-    [Fact(DisplayName = "[Process] Should Throw An InvalidDataException When The Srt File Is Corrupted. (Invalid TimeSpan Format)")]
-    public async void Process__Should_Throw_An_InvalidDataException_When_The_Srt_File_Is_Corrupted__InvalidTimeSpanFormat()
-    {
-      //Arrange
-      var encoding = Encoding.UTF8;
-
-      var mockedSrt = SubtitlesMock.MockedInvalidSrtFile_TimeSpanFormat();
-      var stream = MockedFileUsingMemoryStream(mockedSrt);
-      var bufferSize = 1024;
-      var leaveOpen = false;
-
-      //Act
-      var result = await Assert.ThrowsAsync<InvalidDataException>(async () => await _subtitleProcessor.GenerateModel(stream, encoding, bufferSize, leaveOpen));
-
-      //Assert
-      Assert.IsType<InvalidDataException>(result);
-      Assert.Equal("Invalid Data: Incorrect format for date.", result.Message);
-    }
-
+    
     private MemoryStream MockedFileUsingMemoryStream(StringBuilder mockedSrt)
     {
       return new MemoryStream(Encoding.UTF8.GetBytes(mockedSrt.ToString()));
     }
-
-    //[Fact(DisplayName = "[Process] Should Throw An InvalidDataException When The Srt File Is Corrupted. (TimeSpan Out Of Sync)")]
-    //public async void Process__Should_Throw_An_InvalidDataException_When_The_Srt_File_Is_Corrupted__TimeSpanOutOfSync()
-    //{
-    //  //Arrange
-    //  var encoding = Encoding.UTF8;
-
-    //  var mockedSrt = SubtitlesMock.MockedInvalidSrtFile_TimeSpanOutOfSync();
-    //  var stream = MockedFileUsingMemoryStream(mockedSrt);
-    //  var bufferSize = 1024;
-    //  var leaveOpen = false;
-
-    //  //Act
-    //  var result = await Assert.ThrowsAsync<InvalidDataException>(async () => await _subtitleProcessor.GenerateModel(stream, encoding, bufferSize, leaveOpen));
-
-    //  //Assert
-    //  Assert.IsType<InvalidDataException>(result);
-    //  Assert.Equal("Invalid Data: Date is out of sync.", result.Message);
-    //}
-
-    //[Fact(DisplayName = "[Process] Should Throw An InvalidDataException When The Srt File Is Corrupted. (TimeSpan Out Of Sync With Previous Section)")]
-    //public async void Process__Should_Throw_An_InvalidDataException_When_The_Srt_File_Is_Corrupted__TimeSpanOutOfSyncWithPreviousSection()
-    //{
-    //  //Arrange
-    //  var encoding = Encoding.UTF8;
-
-    //  var mockedSrt = SubtitlesMock.MockedInvalidSrtFile_TimeSpanOutOfSyncWithPreviousSection();
-    //  var stream = MockedFileUsingMemoryStream(mockedSrt);
-    //  var bufferSize = 1024;
-    //  var leaveOpen = false;
-
-    //  //Act
-    //  var result = await Assert.ThrowsAsync<InvalidDataException>(async () => await _subtitleProcessor.GenerateModel(stream, encoding, bufferSize, leaveOpen));
-
-    //  //Assert
-    //  Assert.IsType<InvalidDataException>(result);
-    //  Assert.Equal("Invalid Data: Date is out of sync.", result.Message);
-    //}
   }
 }

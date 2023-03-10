@@ -28,7 +28,6 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
       mockedSrt.AppendLine("00:00:52,874 --> 00:00:55,501");
       mockedSrt.AppendLine("<i>Aku tahu, tapi aku rasa");
       mockedSrt.AppendLine("macam kerja shift.</i>");
-      mockedSrt.AppendLine();
 
       return mockedSrt;
     }
@@ -52,7 +51,6 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
       mockedSrt.AppendLine("00:00:52.874 --> 00:00:55.501");
       mockedSrt.AppendLine("<i>Aku tahu, tapi aku rasa");
       mockedSrt.AppendLine("macam kerja shift.</i>");
-      mockedSrt.AppendLine();
 
       return mockedSrt;
     }
@@ -205,6 +203,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
         new SubtitleModel
         {
           Order = 1,
+          OrderWhiteLine = 1,
           Start = TimeSpan.Parse("00:00:49.203"),
           End = TimeSpan.Parse("00:00:52.623"),
           Text = new List<string>
@@ -216,6 +215,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
         new SubtitleModel
         {
           Order = 2,
+          OrderWhiteLine = 1,
           Start = TimeSpan.Parse("00:00:52.874"),
           End = TimeSpan.Parse("00:00:55.501"),
           Text = new List<string>
@@ -247,6 +247,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 1,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:47.803"),
             End = TimeSpan.Parse("00:00:51.223"),
             Text = new List<string>
@@ -258,6 +259,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 2,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:51.474"),
             End = TimeSpan.Parse("00:00:54.101"),
             Text = new List<string>
@@ -287,6 +289,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 1,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:49.903"),
             End = TimeSpan.Parse("00:00:53.323"),
             Text = new List<string>
@@ -298,6 +301,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 2,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:53.574"),
             End = TimeSpan.Parse("00:00:56.201"),
             Text = new List<string>
@@ -327,6 +331,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 1,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:49.203"),
             End = TimeSpan.Parse("00:00:52.623"),
             Text = new List<string>
@@ -338,6 +343,7 @@ namespace SubtitleTimeshift.Tests.MyOwnTests.Mocks
           new SubtitleModel
           {
             Order = 2,
+            OrderWhiteLine = 1,
             Start = TimeSpan.Parse("00:00:52.874"),
             End = TimeSpan.Parse("00:00:55.501"),
             Text = new List<string>
